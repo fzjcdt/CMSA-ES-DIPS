@@ -96,10 +96,10 @@ def hill_valley_clustering(popu, f, size, dim, lb, ub, eel):
 
 
 def main():
-    TOL = 0.001
+    TOL = 0.00001
     for problem_index in range(8, 9):
         for run in range(1):
-            print("=" * 7)
+            # print("=" * 7)
             # Create function
             f = CEC2013(problem_index)
             size, dim, ub, lb, max_eval_times, rho = get_basic_para(f)
@@ -116,13 +116,14 @@ def main():
                 double_size = True
                 improve_generation = 10 + int(30 * dim / sub_size)
 
-                population = init_popu(size, dim, lb, ub)
+                population = init_popu(size * 50, dim, lb, ub)
                 for indiv in population:
                     indiv[1] = f.evaluate(indiv[0])
                 cur_eval_times += len(population)
-                population = merge_popu(elitist_archive, population)
                 population = sorted(population, key=lambda x: x[1], reverse=True)
                 population = population[:size]
+                population = merge_popu(elitist_archive, population)
+                population = sorted(population, key=lambda x: x[1], reverse=True)
 
                 population, cluster, cluster_num, eval_times = hill_valley_clustering(population, f, size, dim, lb, ub,
                                                                                       eel)
@@ -142,6 +143,9 @@ def main():
                     sub_popu, eval_times = CMSA(f, sub_popu, sub_size, dim, improve_generation, lb, ub, size,
                                                 local_optimal)
                     sub_popu = sorted(sub_popu, key=lambda x: x[1], reverse=True)
+                    # if sub_popu[0][1] - sub_popu[1][1] < 0.01 and np.sum(sub_popu[0][0] - sub_popu[1][0]) > 0.1:
+                    #     print('-' * 200)
+                    #     print(sub_popu[0][0], sub_popu[1][0])
                     cur_eval_times += eval_times
                     if cur_eval_times > max_eval_times:
                         break
@@ -184,23 +188,23 @@ def main():
                     size = min(dim * 1000, size * 2)
                     # size = size * 2
                     sub_size = int(sub_size * 1.2)
-                print(cur_eval_times, len(local_optimal), len(elitist_archive), np.array(elitist_archive)[:, 1])
+                # print(cur_eval_times, len(local_optimal), len(elitist_archive), np.array(elitist_archive)[:, 1])
 
             rst = []
             for elite in elitist_archive:
                 rst.append(elite[0])
 
+            num_opt = f.get_info()['nogoptima']
             count, seeds = how_many_goptima(np.array(rst), f, 0.1)
-            print(problem_index, run, count)
+            print(count / num_opt, end=' ')
             count, seeds = how_many_goptima(np.array(rst), f, 0.01)
-            print(problem_index, run, count)
+            print(count / num_opt, end=' ')
             count, seeds = how_many_goptima(np.array(rst), f, 0.001)
-            print(problem_index, run, count)
+            print(count / num_opt, end=' ')
             count, seeds = how_many_goptima(np.array(rst), f, 0.0001)
-            print(problem_index, run, count)
+            print(count / num_opt, end=' ')
             count, seeds = how_many_goptima(np.array(rst), f, 0.00001)
-            # print("Global optimizers:", seeds)
-            print(problem_index, run, count)
+            print(count / num_opt)
 
 
 main()

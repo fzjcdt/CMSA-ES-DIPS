@@ -144,6 +144,7 @@ def get_weighted_mean(sub_popu, dim, weights):
     for i in range(len(sub_popu)):
         mean += sub_popu[i][0] * weights[i]
     # mean /= len(sub_popu)
+    # mean = sub_popu[0][0]
 
     return mean
 
