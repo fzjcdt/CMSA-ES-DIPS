@@ -32,7 +32,7 @@ def get_basic_para(f):
         ub[i] = f.get_ubound(i)
         lb[i] = f.get_lbound(i)
 
-    return size, dim, ub, lb, f.get_maxfes(), f.get_rho()
+    return size, dim, ub, lb, f.get_maxfes()
 
 
 def hill_valley_test(f, indiv1, indiv2, test_num):
@@ -102,7 +102,7 @@ def main():
             # print("=" * 7)
             # Create function
             f = CEC2013(problem_index)
-            size, dim, ub, lb, max_eval_times, rho = get_basic_para(f)
+            size, dim, ub, lb, max_eval_times = get_basic_para(f)
             cur_eval_times = 0
             elitist_archive = []
             # sub_size = int(10 * np.sqrt(dim))
@@ -137,15 +137,9 @@ def main():
                     for i in range(size):
                         if cluster[i] == c:
                             sub_popu.append(cp.deepcopy(population[i]))
-                    # sub_popu, eval_times = GA(f, sub_popu, sub_size, dim, improve_generation, lb, ub)
-                    # sub_popu, eval_times = CMSA(f, sub_popu, sub_size, dim, improve_generation, lb, ub, size)
-                    # sub_popu, eval_times = CMSA_order(f, sub_popu, sub_size, dim, improve_generation, lb, ub, size)
                     sub_popu, eval_times = CMSA(f, sub_popu, sub_size, dim, improve_generation, lb, ub, size,
                                                 local_optimal)
                     sub_popu = sorted(sub_popu, key=lambda x: x[1], reverse=True)
-                    # if sub_popu[0][1] - sub_popu[1][1] < 0.01 and np.sum(sub_popu[0][0] - sub_popu[1][0]) > 0.1:
-                    #     print('-' * 200)
-                    #     print(sub_popu[0][0], sub_popu[1][0])
                     cur_eval_times += eval_times
                     if cur_eval_times > max_eval_times:
                         break
