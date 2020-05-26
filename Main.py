@@ -1,7 +1,5 @@
 import copy as cp
 
-import numpy as np
-
 from CMSA import CMSA
 from cec2013.cec2013 import *
 
@@ -16,6 +14,7 @@ def init_popu(size, dim, lb, ub):
 
 
 def merge_popu(p1, p2):
+    p2 = cp.deepcopy(p2)
     popu = cp.deepcopy(p1)
     popu.extend(p2)
 
@@ -97,18 +96,34 @@ def hill_valley_clustering(popu, f, size, dim, lb, ub, eel):
 
 def main():
     TOL = 0.00001
-    for problem_index in range(8, 9):
+    for problem_index in range(1, 21):
         for run in range(1):
-            # print("=" * 7)
+            np.random.seed(problem_index * 1000 + run)
             # Create function
             f = CEC2013(problem_index)
             size, dim, ub, lb, max_eval_times = get_basic_para(f)
             cur_eval_times = 0
             elitist_archive = []
-            # sub_size = int(10 * np.sqrt(dim))
             sub_size = max(5, int(3 * np.sqrt(dim)) + 1)
+            restart_times = -1
+            low_quality_index, high_quality_index = 6, 96
+            low_quality_solution, high_quality_solution = 0, 0
+            print(low_quality_index, high_quality_index)
 
             while True:
+                # print(low_quality_index, high_quality_index)
+                restart_times += 1
+                if restart_times % 2 == 0 and restart_times > 0:
+                    if low_quality_solution > high_quality_solution:
+                        low_quality_index = max(3, low_quality_index // 2)
+                        high_quality_index = max(3, high_quality_index // 2)
+                        # high_quality_index = max(low_quality_index, max(3, high_quality_index // 2))
+                    elif low_quality_index < high_quality_index:
+                        low_quality_index = min(96, low_quality_index * 2)
+                        high_quality_index = min(96, high_quality_index * 2)
+                        # low_quality_index = min(high_quality_index, min(96, low_quality_index * 2))
+                    low_quality_solution, high_quality_solution = 0, 0
+
                 local_optimal = cp.deepcopy(elitist_archive)
                 if cur_eval_times > max_eval_times:
                     break
@@ -116,7 +131,10 @@ def main():
                 double_size = True
                 improve_generation = 10 + int(30 * dim / sub_size)
 
-                population = init_popu(size * 50, dim, lb, ub)
+                if restart_times % 2 == 0:
+                    population = init_popu(size * low_quality_index, dim, lb, ub)
+                else:
+                    population = init_popu(size * high_quality_index, dim, lb, ub)
                 for indiv in population:
                     indiv[1] = f.evaluate(indiv[0])
                 cur_eval_times += len(population)
@@ -125,7 +143,7 @@ def main():
                 population = merge_popu(elitist_archive, population)
                 population = sorted(population, key=lambda x: x[1], reverse=True)
 
-                population, cluster, cluster_num, eval_times = hill_valley_clustering(population, f, size, dim, lb, ub,
+                population, cluster, cluster_num, eval_times = hill_valley_clustering(population, f, len(population), dim, lb, ub,
                                                                                       eel)
 
                 cur_eval_times += eval_times
@@ -134,7 +152,7 @@ def main():
 
                 for c in range(cluster_num + 1):
                     sub_popu = []
-                    for i in range(size):
+                    for i in range(len(population)):
                         if cluster[i] == c:
                             sub_popu.append(cp.deepcopy(population[i]))
                     sub_popu, eval_times = CMSA(f, sub_popu, sub_size, dim, improve_generation, lb, ub, size,
@@ -149,13 +167,20 @@ def main():
                     if len(elitist_archive) != 0:
                         largest_fitness = elitist_archive[0][1]
                     else:
-                        largest_fitness = 0
+                        largest_fitness = -100000000
                     for elite in elitist_archive:
                         if elite[1] > largest_fitness:
                             largest_fitness = elite[1]
 
                     if len(elitist_archive) == 0 or sub_popu_best[1] > largest_fitness + TOL:
                         elitist_archive = [sub_popu_best]
+                        if restart_times % 2 == 0:
+                            low_quality_solution = 1
+                            high_quality_solution = 0
+                        else:
+                            low_quality_solution = 0
+                            high_quality_solution = 1
+
                         continue
 
                     if sub_popu_best[1] > largest_fitness - TOL:
@@ -174,13 +199,20 @@ def main():
                         if same_niching:
                             if sub_popu_best[1] > elitist_archive[nearest_index][1]:
                                 elitist_archive[nearest_index] = sub_popu_best
+                                if restart_times % 2 == 0:
+                                    low_quality_solution += 1
+                                else:
+                                    high_quality_solution += 1
                             continue
                         elitist_archive.append(sub_popu_best)
+                        if restart_times % 2 == 0:
+                            low_quality_solution += 1
+                        else:
+                            high_quality_solution += 1
                         double_size = False
 
                 if double_size:
                     size = min(dim * 1000, size * 2)
-                    # size = size * 2
                     sub_size = int(sub_size * 1.2)
                 # print(cur_eval_times, len(local_optimal), len(elitist_archive), np.array(elitist_archive)[:, 1])
 
