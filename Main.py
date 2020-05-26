@@ -1,4 +1,5 @@
 import copy as cp
+import time
 
 from CMSA import CMSA
 from cec2013.cec2013 import *
@@ -106,24 +107,57 @@ def update_quality_index(restart_times, low_s, high_s, low_quality_index, high_q
     return low_quality_index, high_quality_index
 
 
+def write2file(problem_index, run, elitist_archive, fes, eva_time):
+    temp = zip(elitist_archive, fes, eva_time)
+    temp = sorted(temp, key=lambda x: (x[1], x[2]))
+    with open('./rst/problem' + '%03d' % problem_index + 'run%03d' % run + '.dat', 'w') as file:
+        for line in temp:
+            for x in line[0][0]:
+                file.write(str(x) + ' ')
+            file.write('= ' + str(line[0][1][0]) + ' @ ')
+            file.write(str(line[1]) + ' ')
+            file.write(str(line[2]) + ' 1\n')
+
+
+def write_acc(f, problem_index, elitist_archive):
+    rst = []
+    for elite in elitist_archive:
+        rst.append(elite[0])
+
+    num_opt = f.get_info()['nogoptima']
+    with open(str(problem_index) + '_accuracy.txt', 'a') as file:
+        count, seeds = how_many_goptima(np.array(rst), f, 0.1)
+        file.write(str(count / num_opt) + ' ')
+        count, seeds = how_many_goptima(np.array(rst), f, 0.01)
+        file.write(str(count / num_opt) + ' ')
+        count, seeds = how_many_goptima(np.array(rst), f, 0.001)
+        file.write(str(count / num_opt) + ' ')
+        count, seeds = how_many_goptima(np.array(rst), f, 0.0001)
+        file.write(str(count / num_opt) + ' ')
+        count, seeds = how_many_goptima(np.array(rst), f, 0.00001)
+        file.write(str(count / num_opt) + '\n')
+
+
 def main():
     TOL = 0.00001
-    for problem_index in range(8, 9):
-        for run in range(1):
+    for problem_index in range(2, 4):
+        for run in range(1, 51):
+            print(problem_index, run)
+            start = time.time()
             np.random.seed(problem_index * 1000 + run)
             # Create function
             f = CEC2013(problem_index)
             size, dim, ub, lb, max_eval_times = get_basic_para(f)
             cur_eval_times = 0
-            elitist_archive = []
+            elitist_archive, fes, eva_time = [], [], []
             sub_size = max(5, int(3 * np.sqrt(dim)) + 1)
             restart_times = -1
             low_quality_index, high_quality_index = 2, 50
             low_quality_solution, high_quality_solution = 0, 0
-            print(low_quality_index, high_quality_index)
+            # print(low_quality_index, high_quality_index)
 
             while True:
-                print(low_quality_index, high_quality_index)
+                # print(low_quality_index, high_quality_index)
                 restart_times += 1
                 low_quality_index, high_quality_index = update_quality_index(restart_times, low_quality_solution,
                                                                              high_quality_solution, low_quality_index,
@@ -180,6 +214,8 @@ def main():
 
                     if len(elitist_archive) == 0 or sub_popu_best[1] > largest_fitness + TOL:
                         elitist_archive = [sub_popu_best]
+                        fes = [cur_eval_times]
+                        eva_time = [(time.time() - start) * 1000]
                         if restart_times % 2 == 0:
                             low_quality_solution = 1
                             high_quality_solution = 0
@@ -205,12 +241,16 @@ def main():
                         if same_niching:
                             if sub_popu_best[1] > elitist_archive[nearest_index][1]:
                                 elitist_archive[nearest_index] = sub_popu_best
+                                fes[nearest_index] = cur_eval_times
+                                eva_time[nearest_index] = (time.time() - start) * 1000
                                 if restart_times % 2 == 0:
                                     low_quality_solution += 1
                                 else:
                                     high_quality_solution += 1
                             continue
                         elitist_archive.append(sub_popu_best)
+                        fes.append(cur_eval_times)
+                        eva_time.append((time.time() - start) * 1000)
                         if restart_times % 2 == 0:
                             low_quality_solution += 1
                         else:
@@ -221,21 +261,8 @@ def main():
                     size = min(dim * 1000, size * 2)
                     sub_size = int(sub_size * 1.2)
 
-            rst = []
-            for elite in elitist_archive:
-                rst.append(elite[0])
-
-            num_opt = f.get_info()['nogoptima']
-            count, seeds = how_many_goptima(np.array(rst), f, 0.1)
-            print(count / num_opt, end=' ')
-            count, seeds = how_many_goptima(np.array(rst), f, 0.01)
-            print(count / num_opt, end=' ')
-            count, seeds = how_many_goptima(np.array(rst), f, 0.001)
-            print(count / num_opt, end=' ')
-            count, seeds = how_many_goptima(np.array(rst), f, 0.0001)
-            print(count / num_opt, end=' ')
-            count, seeds = how_many_goptima(np.array(rst), f, 0.00001)
-            print(count / num_opt)
+            write_acc(f, problem_index, elitist_archive)
+            write2file(problem_index, run, elitist_archive, fes, eva_time)
 
 
 main()
