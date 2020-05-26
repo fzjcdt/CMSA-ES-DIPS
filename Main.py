@@ -114,7 +114,8 @@ def write2file(problem_index, run, elitist_archive, fes, eva_time):
         for line in temp:
             for x in line[0][0]:
                 file.write(str(x) + ' ')
-            file.write('= ' + str(line[0][1][0]) + ' @ ')
+            fitness = np.array(line[0][1])
+            file.write('= ' + str(fitness.reshape(1)[0]) + ' @ ')
             file.write(str(line[1]) + ' ')
             file.write(str(line[2]) + ' 1\n')
 
@@ -140,7 +141,7 @@ def write_acc(f, problem_index, elitist_archive):
 
 def main():
     TOL = 0.00001
-    for problem_index in range(2, 4):
+    for problem_index in range(4, 11):
         for run in range(1, 51):
             print(problem_index, run)
             start = time.time()
