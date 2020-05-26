@@ -154,7 +154,6 @@ def main():
             restart_times = -1
             low_quality_index, high_quality_index = 2, 50
             low_quality_solution, high_quality_solution = 0, 0
-            # print(low_quality_index, high_quality_index)
 
             while True:
                 # print(low_quality_index, high_quality_index)
