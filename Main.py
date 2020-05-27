@@ -141,11 +141,11 @@ def write_acc(f, problem_index, elitist_archive):
 
 def main():
     TOL = 0.00001
-    for problem_index in range(4, 11):
+    for problem_index in range(1, 21):
         for run in range(1, 51):
             print(problem_index, run)
             start = time.time()
-            np.random.seed(problem_index * 1000 + run)
+            np.random.seed(problem_index * 50 + run)
             # Create function
             f = CEC2013(problem_index)
             size, dim, ub, lb, max_eval_times = get_basic_para(f)
