@@ -28,14 +28,12 @@ def CMSA(f, sub_popu, sub_size, dim, improve_generation, lb, ub, total_size, loc
         new_popu.append([y_l, f_l, sigma_l, s_l])
         eval_times += 1
 
-    # sub_popu = sub_popu[:max(1, int(len(sub_popu) * 0.3))]
-    # sub_popu.extend(new_popu)
     sub_popu = sorted(new_popu, key=lambda x: x[1], reverse=True)
     sub_popu = sub_popu[:half_sub_size]
     if sub_popu[0][1] > best_so_far_indiv[1]:
         best_so_far_indiv = cp.deepcopy(sub_popu[0])
 
-    ## -------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------------------
 
     # tau, tau_c, weights, covariance, cholesky = init_para(sub_popu, sub_size, dim, lb, ub, total_size)
     generation = 0
@@ -61,14 +59,8 @@ def CMSA(f, sub_popu, sub_size, dim, improve_generation, lb, ub, total_size, loc
             new_popu.append([y_l, f_l, sigma_l, s_l])
             eval_times += 1
 
-        # sub_popu = sub_popu[:max(1, int(len(sub_popu) * 0.3))]
-        # sub_popu.extend(new_popu)
         sub_popu = sorted(new_popu, key=lambda x: x[1], reverse=True)
         sub_popu = sub_popu[:half_sub_size]
-        # sub_popu = sub_popu[:sub_size]
-        # sub_popu = sorted(new_popu, key=lambda x: x[1], reverse=True)
-
-        # sub_popu = sorted(new_popu, key=lambda x: x[1], reverse=True)
         if sub_popu[0][1] > best_so_far_indiv[1]:
             if sub_popu[0][1] > best_so_far_indiv[1] + 0.00001:
                 without_improve = 0
@@ -143,7 +135,6 @@ def get_weighted_mean(sub_popu, dim, weights):
     mean = np.zeros(dim, dtype=float)
     for i in range(len(sub_popu)):
         mean += sub_popu[i][0] * weights[i]
-    # mean /= len(sub_popu)
     # mean = sub_popu[0][0]
 
     return mean
@@ -165,7 +156,6 @@ def init_para(sub_popu, sub_size, dim, lb, ub, total_size):
 
     if len(sub_popu) == 1:
         bandwidth = get_bandwidth(dim, lb, ub, total_size)
-        # bandwidth = get_bandwidth(dim, lb, ub, sub_size)
         covariance = np.eye(dim) * bandwidth * 0.01
         cholesky = np.eye(dim) * np.sqrt(bandwidth * 0.01)
     else:

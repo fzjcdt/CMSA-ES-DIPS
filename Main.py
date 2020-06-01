@@ -145,7 +145,7 @@ def main():
         for run in range(1, 51):
             print(problem_index, run)
             start = time.time()
-            np.random.seed(problem_index * 50 + run)
+            np.random.seed(problem_index * 100 + run)
             # Create function
             f = CEC2013(problem_index)
             size, dim, ub, lb, max_eval_times = get_basic_para(f)
